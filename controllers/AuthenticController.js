@@ -126,66 +126,6 @@ const register = (req, res) => {
 
 
 
-// ############### LOGIN ###############
-const login = (req, res) => {
-    const data = req.body
-    const emailUser = data.email
-    
-    try {
-        if(!data.email || !data.password) throw { message : 'Data Must Be Filled' }
-    } catch (error) {
-        res.json({
-            error : true,
-            message : error.message
-        })
-    }
-
-    try {
-        const passwordHashed = hashPassword(data.password)
-        data.password = passwordHashed
-
-        var sqlQuery = `SELECT * FROM users WHERE email = ? AND password = ?`
-        db.query(sqlQuery, [emailUser, passwordHashed], (err, result) => {
-            try {
-                if(result.length === 1){
-                    jwt.sign({id : result[0].id, email : result[0].email, email_confirmed : result[0].email_confirmed}, '123abc', (err, token) => {
-                        try {
-                            if(err) throw err
-
-                            res.json({
-                                error : false,
-                                message : 'Login Success',
-                                data : {
-                                    token : token
-                                }
-                            })
-                        } catch (error) {
-                            res.json({
-                                error : true,
-                                message : error.message
-                            })
-                        }
-                    })
-                }else{
-                    throw { message : 'Your Email / Password Does Not Match' }
-                }
-            } catch (error) {
-                res.json({
-                    error : true,
-                    message : error.message
-                })
-            }
-        })
-    } catch (error) {
-        res.json({
-            error : true,
-            message : 'Failed To Hash Password'
-        })
-    }
-}
-
-
-
 // ############### CONFIRMED EMAIL VERIFICATION ###############
 const confirmedEmailVerification = (req, res) => {
     const data = req.body
@@ -341,6 +281,109 @@ const activationEmailVerification = (req, res) => {
 
 
 
+// ############### LOGIN ###############
+const login = (req, res) => {
+    const data = req.body
+    const emailUser = data.email
+    
+    try {
+        if(!data.email || !data.password) throw { message : 'Data Must Be Filled' }
+    } catch (error) {
+        res.json({
+            error : true,
+            message : error.message
+        })
+    }
+
+    try {
+        const passwordHashed = hashPassword(data.password)
+        data.password = passwordHashed
+
+        var sqlQuery = `SELECT * FROM users WHERE email = ? AND password = ?`
+        db.query(sqlQuery, [emailUser, passwordHashed], (err, result) => {
+            try {
+                if(result.length === 1){
+                    jwt.sign({id : result[0].id, email : result[0].email, email_confirmed : result[0].email_confirmed}, '123abc', (err, token) => {
+                        try {
+                            if(err) throw err
+
+                            res.json({
+                                error : false,
+                                message : 'Login Success',
+                                data : {
+                                    token : token
+                                }
+                            })
+                        } catch (error) {
+                            res.json({
+                                error : true,
+                                message : error.message
+                            })
+                        }
+                    })
+                }else{
+                    throw { message : 'Your Email / Password Does Not Match' }
+                }
+            } catch (error) {
+                res.json({
+                    error : true,
+                    message : error.message
+                })
+            }
+        })
+    } catch (error) {
+        res.json({
+            error : true,
+            message : 'Failed To Hash Password'
+        })
+    }
+}
+
+
+
+// ############### USER VERIFY STATUS ###############
+const userVerifyStatus = (req, res) => {
+    const data = req.body
+    const token = data.token
+
+    if(!token) return res.json({
+        error : true,
+        message : 'Token Not Found'
+    })
+    
+    jwt.verify(token, '123abc', (err, data) => {
+        try {
+            if(err) throw err
+
+            sqlQuery = `SELECT * from users WHERE id = ?`
+            db.query(sqlQuery, data.id, (err, result) => {
+                try {
+                    if(err) throw err
+
+                    res.json({
+                        error : false,
+                        email_confirmed : result[0].email_confirmed
+                    })
+                } catch (error) {
+                    res.json({
+                        error : true,
+                        message : error.message,
+                        detail : error
+                    })
+                }
+            })
+        } catch (error) {
+            res.json({
+                error : true,
+                message : error.message,
+                detail : error
+            })
+        }
+    })
+}
+
+
+
 // ############### TEST TO SENDING EMAIL VERIFICATION ###############
 const testingSendEmailVerification = (req, res) => {
     const transporter = nodemailer.createTransport(
@@ -372,9 +415,10 @@ const testingSendEmailVerification = (req, res) => {
 }
 
 module.exports = {
-    register : register,
-    login : login, 
+    register : register, 
     confirmedEmailVerification : confirmedEmailVerification,
     activationEmailVerification : activationEmailVerification,
+    login : login,
+    userVerifyStatus : userVerifyStatus,
     testingSendEmailVerification : testingSendEmailVerification
 }
