@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken')
 
 // ############### CREATE TASK ###############
 const createTask = (req, res) => {
-    // Step1. Ambil Semua Data Value
+    // Step1. Ambil Semua Data Value Termasuk Token
     // Step2. Validasi Data Value
     // Step3. Hashing Password
     // Step4. Store Data Value To Database
@@ -30,7 +30,7 @@ const createTask = (req, res) => {
                     if(result.length === 0){
                         res.json({
                             error : true,
-                            message : 'Id / Account Not Found'
+                            message : 'Id User / Account Not Found'
                         })
                     }else{
                         sqlQuery = `INSERT INTO tasks SET ?`
@@ -84,7 +84,7 @@ const getAllTasks = (req, res) => {
         try {
             if(err) throw err
 
-            sqlQuery = `SELECT * from tasks where id_user = ?`
+            sqlQuery = `SELECT * from tasks where id_user = ? ORDER BY date ASC`
             db.query(sqlQuery, dataToken.id, (err, result) => {
                 try {
                     if(err) throw err
@@ -118,43 +118,61 @@ const getAllTasks = (req, res) => {
 
 // ############### DELETE TASK ###############
 const deleteTask = (req, res) => {
-    const id = Number(req.params.idTask)
+    const idTask = Number(req.params.idTask)
+    const token = req.params.myTkn // myTkn : Token (Token Ditaruh di Params Karena Method Delete Tidak Bisa Menerima "req.body" / Data Dari User)
 
-    if(!id) return res.json({
+    if(!idTask || !token) return res.json({
         error : true,
-        message : 'Id Task Not Found'
+        message : 'Id Task / Token Not Found'
     })
 
-    db.query('SELECT * FROM tasks WHERE id = ?;', id, (err, result) => {
+    jwt.verify(token, '123abc', (err, dataToken) => {
         try {
-            if (err) throw err
+            if(err) throw err
 
-            if(result.length > 0){
-                var sqlQuery = 'DELETE FROM tasks WHERE id = ?;'
-
-                db.query(sqlQuery, id, (err, result) => {
-                    try {
-                        if (err) throw err
-
-                        res.json({
-                            error : false, 
-                            message : 'Task Has Been Deleted'
-                        })
-                    } catch (error) {
+            db.query('SELECT * FROM tasks WHERE id = ? AND id_user = ?;', [idTask, dataToken.id], (err, result) => {
+                try {
+                    if (err) throw err
+                    
+                    if(result.length === 0){
                         res.json({
                             error : true,
-                            message : error.message
+                            message : 'Task With Id ' + idTask + ' Has Not Found'
+                        })
+                    }else{
+                        var sqlQuery = 'DELETE FROM tasks WHERE id = ? AND id_user = ?;'
+    
+                        db.query(sqlQuery, [idTask, dataToken.id], (err, result) => {
+                            try {
+                                if (err) throw err
+        
+                                res.json({
+                                    error : false, 
+                                    message : 'Task Has Been Deleted'
+                                })
+                            } catch (error) {
+                                res.json({
+                                    error : true,
+                                    message : error.message,
+                                    detail : error
+                                })
+                            }
                         })
                     }
-                })
-            }else{
-                res.json({
-                    error : true,
-                    message : 'Task With Id ' + id + ' Has Not Found'
-                })
-            }
+                } catch (error) {
+                    res.json({
+                        error : true,
+                        message : error.message,
+                        detail : error
+                    })
+                }
+            })
         } catch (error) {
-            res.send(error.message)
+            res.json({
+                error : true,
+                message : error.message,
+                detail : error
+            })
         }
     })
 }
@@ -163,43 +181,61 @@ const deleteTask = (req, res) => {
 
 // ############### TASK HAS BEEN DONE ###############
 const updateTaskDone = (req, res) => {
-    const id = Number(req.params.idTask)
+    const idTask = Number(req.params.idTask)
+    const token = req.params.myTkn // myTkn : Token (Token Ditaruh di Params Karena Method Delete Tidak Bisa Menerima "req.body" / Data Dari User)
 
-    if(!id) return res.json({
+    if(!idTask || !token) return res.json({
         error : true,
-        message : 'Id Task Not Found'
+        message : 'Id Task / Token Not Found'
     })
 
-    db.query('SELECT * FROM tasks WHERE id = ?;', id, (err, result) => {
+    jwt.verify(token, '123abc', (err, dataToken) => {
         try {
-            if (err) throw err
+            if(err) throw err
 
-            if(result.length > 0){
-                var sqlQuery = 'UPDATE TASKS SET status = 0 WHERE id = ?;'
-
-                db.query(sqlQuery, id, (err, result) => {
-                    try {
-                        if (err) throw err
-
-                        res.json({
-                            error : false, 
-                            message : 'Task Has Been Done'
-                        })
-                    } catch (error) {
+            db.query('SELECT * FROM tasks WHERE id = ? AND id_user = ?;', [idTask, dataToken.id], (err, result) => {
+                try {
+                    if (err) throw err
+                    
+                    if(result.length === 0){
                         res.json({
                             error : true,
-                            message : error.message
+                            message : 'Task With Id ' + idTask + ' Has Not Found'
+                        })
+                    }else{
+                        var sqlQuery = 'UPDATE TASKS SET status = 0 WHERE id = ? AND id_user = ?;'
+    
+                        db.query(sqlQuery, [idTask, dataToken.id], (err, result) => {
+                            try {
+                                if (err) throw err
+        
+                                res.json({
+                                    error : false, 
+                                    message : 'Task Has Been Done'
+                                })
+                            } catch (error) {
+                                res.json({
+                                    error : true,
+                                    message : error.message,
+                                    detail : error
+                                })
+                            }
                         })
                     }
-                })
-            }else{
-                res.json({
-                    error : true,
-                    message : 'Task With Id ' + id + ' Has Not Found'
-                })
-            }
+                } catch (error) {
+                    res.json({
+                        error : true,
+                        message : error.message,
+                        detail : error
+                    })
+                }
+            })
         } catch (error) {
-            res.send(error.message)
+            res.json({
+                error : true,
+                message : error.message,
+                detail : error
+            })
         }
     })
 }

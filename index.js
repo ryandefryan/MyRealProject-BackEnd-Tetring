@@ -3,6 +3,7 @@ const express = require('express')
 const app = express()
 const cors = require('cors')
 app.use(cors())
+const loggingAPI = require('./middleware/loggingAPI.js')
 const authenticRouter = require('./routers/AuthenticRouter.js')
 const tasksRouter = require('./routers/TasksRouter.js')
 
@@ -16,6 +17,7 @@ const PORT = 4000
 app.get('/', (req, res) => {
     res.send('Authentic System "Ready"')
 })
+app.use(loggingAPI)
 app.use('/authentic-system', authenticRouter)
 app.use('/my-tasks', tasksRouter)
 

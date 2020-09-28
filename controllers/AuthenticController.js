@@ -343,34 +343,16 @@ const login = (req, res) => {
 
 // ############### USER VERIFY STATUS ###############
 const userVerifyStatus = (req, res) => {
-    const data = req.body
-    const token = data.token
-
-    if(!token) return res.json({
-        error : true,
-        message : 'Token Not Found'
-    })
+    const data = req.dataToken
     
-    jwt.verify(token, '123abc', (err, data) => {
+    sqlQuery = `SELECT * from users WHERE id = ?`
+    db.query(sqlQuery, data.id, (err, result) => {
         try {
             if(err) throw err
 
-            sqlQuery = `SELECT * from users WHERE id = ?`
-            db.query(sqlQuery, data.id, (err, result) => {
-                try {
-                    if(err) throw err
-
-                    res.json({
-                        error : false,
-                        email_confirmed : result[0].email_confirmed
-                    })
-                } catch (error) {
-                    res.json({
-                        error : true,
-                        message : error.message,
-                        detail : error
-                    })
-                }
+            res.json({
+                error : false,
+                email_confirmed : result[0].email_confirmed
             })
         } catch (error) {
             res.json({
@@ -378,7 +360,7 @@ const userVerifyStatus = (req, res) => {
                 message : error.message,
                 detail : error
             })
-        }
+        }   
     })
 }
 
