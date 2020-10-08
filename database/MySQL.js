@@ -1,10 +1,19 @@
 const mysql = require('mysql')
 
+// ############### BEFORE DEPLOY ###############
 const db = mysql.createConnection({
     user : 'root',
     password : '20121995',
     database : 'authentic_system',
     port : '3306'
 })
+
+// ############### AFTER DEPLOY ###############
+// const db = mysql.createConnection({
+//     user : ' sql12369461',
+//     password : '346V54Wkv2',
+//     database : 'sql12369461',
+//     port : '3306'
+// })
 
 module.exports = db
